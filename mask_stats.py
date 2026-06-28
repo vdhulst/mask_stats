@@ -79,7 +79,7 @@ fraction_masked_pix_per_channel = np.divide(nr_pix_mask_per_channel, nr_pix_data
 
 table = np.column_stack((np.arange(len(fraction_masked_pix_per_channel)), fraction_masked_pix_per_channel));
 np.savetxt(
-    "/Users/vdhulst/Data/Alma_Data/Espada_tests/mask_statistics.csv",
+    "mask_statistics.csv",
     table,
     delimiter=",",
     header="#Channel,#Value",
@@ -94,7 +94,7 @@ plt.plot(fraction_masked_pix_per_channel, 'r-', label='Spectrum')
 plt.plot([1, npix1], [0, 0],'k--')
 plt.xlabel('Channel', fontsize = 12)
 plt.ylabel('Fraction of flagged pixels', fontsize = 12)
-plt.savefig('/Users/vdhulst/Data/Alma_Data/Espada_tests/mask_statistics.pdf',format = 'pdf', bbox_inches = 'tight', transparent=True)
+plt.savefig('mask_statistics.pdf',format = 'pdf', bbox_inches = 'tight', transparent=True)
 
 # close fits files
 hdu.close();
