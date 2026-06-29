@@ -9,9 +9,11 @@ from astropy.io import fits
 from matplotlib.ticker import AutoMinorLocator
 import matplotlib.ticker as mtick
 
-if(len(sys.argv) != 3):
-	sys.stderr.write("Usage: mask_stats.py <ALMA data cube> <ALMA mask cube>.\n");
+if(len(sys.argv) != 4):
+	sys.stderr.write("Usage: mask_stats.py <ALMA data cube> <ALMA mask cube> <SoFiA mask cube>.\n");
 	sys.exit(1);
+
+sys.stderr.write("\nComparison of ALMA and SoFiA mask and ALMA mask statistics.\n\n");
 
 # Read FITS files
 try:
@@ -27,20 +29,29 @@ try:
 	head_alma  = hdu_alma[0].header;
 	mask_alma  = hdu_alma[0].data;
 except:
-	sys.stderr.write("Error: Failed to read ALMA mask cube {:s}.\n".format(sys.argv[3]));
+	sys.stderr.write("Error: Failed to read ALMA mask cube {:s}.\n".format(sys.argv[2]));
 	sys.exit(1);
 
-# sanity checks
+try:
+	hdu_sofia  = fits.open(sys.argv[3]);
+	head_sofia = hdu_sofia[0].header;
+	mask_sofia = hdu_sofia[0].data;
+except:
+	sys.stderr.write("Error: Failed to read SoFiA mask cube {:s}.\n".format(sys.argv[3]));
+	sys.exit(1);
+
+# Sanity checks
 dim_data       = len(data.shape);
 dim_mask_alma  = len(mask_alma.shape);
+dim_mask_sofia = len(mask_sofia.shape);
 
 assert(dim_data       > 1 and dim_data       < 5);
 assert(dim_mask_alma  > 1 and dim_mask_alma  < 5);
+assert(dim_mask_sofia > 1 and dim_mask_sofia < 5);
 
 assert(dim_data       < 4 or data.shape[0]       == 1);
 assert(dim_mask_alma  < 4 or mask_alma.shape[0]  == 1);
-
-sys.stdout.write("\nNaxes_DATA  = {:d}\nNaxes_ALMA  = {:d}\n".format(dim_data, dim_mask_alma));
+assert(dim_mask_sofia < 4 or mask_sofia.shape[0] == 1);
 
 if(dim_data       > 3):
 	sys.stderr.write("Warning: Dropping 4th axis of data cube.\n");
@@ -48,12 +59,34 @@ if(dim_data       > 3):
 if(dim_mask_alma  > 3):
 	sys.stderr.write("Warning: Dropping 4th axis of ALMA mask.\n");
 	mask_alma  = np.reshape(mask_alma,  mask_alma.shape[1:]);
+if(dim_mask_sofia > 3):
+	sys.stderr.write("Warning: Dropping 4th axis of SoFiA mask.\n");
+	mask_sofia = np.reshape(mask_sofia, mask_sofia.shape[1:]);
 
-# determine dimensions of the cube
+# Determine number of SoFiA sources
+n_src = int(np.nanmax(mask_sofia));
+if(n_src < 1):
+	sys.stderr.write("Error: No sources found in SoFiA mask.\n");
+	sys.exit(1);
+
+sys.stdout.write("\nFound {0:d} sources in SoFiA mask.\n\n".format(n_src));
+
+# Loop over all sources
+for src in range(1, n_src + 1):
+	data_masked = data[mask_sofia == src];
+	npix_sofia  = np.nansum(mask_sofia == src);
+	npix_alma   = np.nansum(mask_alma[mask_sofia == src] > 0);
+	flux_sofia  = np.nansum(data_masked);
+	flux_alma   = np.nansum(data_masked[mask_alma[mask_sofia == src] > 0]);
+	
+	sys.stdout.write("Source {:d}:\n  N_SoFiA = {:d}\n  N_ALMA  = {:d}\n  F_SoFiA = {:.2f}\n  F_ALMA  = {:.2f}\n".format(src, npix_sofia, npix_alma, flux_sofia, flux_alma));
+	sys.stdout.write("  ALMA mask pixel fraction: {:.2f}%\n  ALMA mask flux fraction:  {:.2f}%\n".format(100.0 * npix_alma / npix_sofia, 100.0 * flux_alma / flux_sofia));
+
+# determine dimensions of the ALMA cube
 npix1 = mask_alma.shape[0];
 npix2 = mask_alma.shape[1];
 npix3 = mask_alma.shape[2];
-sys.stdout.write("\nCube Dimension: {:d} by {:d} by {:d} pixels \n".format(npix3, npix2, npix1));
+sys.stdout.write("\nALMA Cube Dimension: {:d} by {:d} by {:d} pixels \n".format(npix3, npix2, npix1));
         
 # determine flagged fraction per channel
 nr_pix_mask = np.count_nonzero(~np.isnan(mask_alma));
@@ -62,7 +95,7 @@ nr_masked_pix = np.count_nonzero(mask_alma == 1);
 fraction_data_pix = 100 * (nr_pix_data / nr_pix_mask);
 fraction_masked_pix = 100 * (nr_masked_pix / nr_pix_data);
 # print (nr_pix_data, nr_pix_mask, nr_masked_pix, fraction_masked_pix);
-sys.stdout.write("\nALMA Mask Statistics: \n  valid data pixels:  {:d}\n  total pixels:  {:d}\n  fraction of valid data pixeels =  {:.2f} %\n  masked pixels:  {:d}\n  fraction of flagged pixels =  {:.2f} %\n\n For detailed statistics per channel see the files:\n mask_statistics.csv and mask_statistics.pdf\n".format(nr_pix_data, nr_pix_mask, fraction_data_pix, nr_masked_pix, fraction_masked_pix));
+sys.stdout.write("\nALMA Mask Statistics: \n  valid data pixels:  {:d}\n  total pixels:  {:d}\n  fraction of valid data pixels =  {:.2f} %\n  masked pixels:  {:d}\n  fraction of flagged pixels =  {:.2f} %\n\n For detailed statistics per channel see the files:\n mask_statistics.csv and mask_statistics.pdf\n".format(nr_pix_data, nr_pix_mask, fraction_data_pix, nr_masked_pix, fraction_masked_pix));
 
 # initialise array to store fractions
 fraction_masked_pix_per_channel = np.zeros(npix1);
