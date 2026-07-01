@@ -63,6 +63,33 @@ if(dim_mask_sofia > 3):
 	sys.stderr.write("Warning: Dropping 4th axis of SoFiA mask.\n");
 	mask_sofia = np.reshape(mask_sofia, mask_sofia.shape[1:]);
 
+# Global statistics
+
+npix_sofia_total = np.nansum(mask_sofia > 0)
+npix_mask_total = np.nansum(mask_alma > 0)
+npix_overlap = np.nansum((mask_sofia > 0) & (mask_alma > 0))
+pixel_frac_sofia = 100.0 * npix_overlap / npix_sofia_total if npix_sofia_total > 0 else 0.0
+pixel_frac_provided = 100.0 * npix_overlap / npix_mask_total if npix_mask_total > 0 else 0.0
+       
+flux_sofia_total = np.nansum(data[mask_sofia > 0])
+flux_mask_total = np.nansum(data[mask_alma > 0])
+flux_overlap = np.nansum(data[(mask_sofia > 0) & (mask_alma > 0)])
+flux_frac_sofia = 100.0 * flux_overlap / flux_sofia_total if flux_sofia_total != 0 else 0.0
+flux_frac_provided = 100.0 * flux_overlap / flux_mask_total if flux_mask_total != 0 else 0.0
+
+sys.stderr.write("\n=== GLOBAL MASK COMPARISON ===\n\n")
+sys.stderr.write("SoFiA mask pixels: {:d}\n".format(npix_sofia_total))
+sys.stderr.write("ALMA mask pixels: {:d}\n".format(npix_mask_total))
+sys.stderr.write("Overlap pixels: {:d}\n".format(npix_overlap))
+sys.stderr.write("(SoFiA ∩ ALMA mask) / SoFiA = {:.2f}% of SoFiA pixels\n".format(pixel_frac_sofia))
+sys.stderr.write("(SoFiA ∩ ALMA mask) / ALMA mask = {:.2f}% of ALMA mask pixels\n".format(pixel_frac_provided))
+sys.stderr.write("SoFiA total flux: {:.2f}\n".format(flux_sofia_total))
+sys.stderr.write("ALMA mask total flux: {:.2f}\n".format(flux_mask_total))
+sys.stderr.write("(SoFiA ∩ ALMA mask) / SoFiA = {:.2f}% of SoFiA flux\n".format(flux_frac_sofia))
+sys.stderr.write("(SoFiA ∩ ALMA mask) / ALMA mask = {:.2f}% of ALMA mask flux\n".format(flux_frac_provided))
+   
+sys.stderr.write("\n=== SOURCE BY SOURCE MASK COMPARISON ===\n")
+
 # Determine number of SoFiA sources
 n_src = int(np.nanmax(mask_sofia));
 if(n_src < 1):
@@ -71,7 +98,7 @@ if(n_src < 1):
 
 sys.stdout.write("\nFound {0:d} sources in SoFiA mask.\n\n".format(n_src));
 
-# Loop over all sources
+# Loop over all sources and provide per source statistics
 for src in range(1, n_src + 1):
 	data_masked = data[mask_sofia == src];
 	npix_sofia  = np.nansum(mask_sofia == src);
@@ -81,6 +108,9 @@ for src in range(1, n_src + 1):
 	
 	sys.stdout.write("Source {:d}:\n  N_SoFiA = {:d}\n  N_ALMA  = {:d}\n  F_SoFiA = {:.2f}\n  F_ALMA  = {:.2f}\n".format(src, npix_sofia, npix_alma, flux_sofia, flux_alma));
 	sys.stdout.write("  ALMA mask pixel fraction: {:.2f}%\n  ALMA mask flux fraction:  {:.2f}%\n".format(100.0 * npix_alma / npix_sofia, 100.0 * flux_alma / flux_sofia));
+
+
+# now look at the statistivs per channel and produce a plot and csv file
 
 # determine dimensions of the ALMA cube
 npix1 = mask_alma.shape[0];
