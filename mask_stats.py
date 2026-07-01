@@ -77,18 +77,18 @@ flux_overlap = np.nansum(data[(mask_sofia > 0) & (mask_alma > 0)])
 flux_frac_sofia = 100.0 * flux_overlap / flux_sofia_total if flux_sofia_total != 0 else 0.0
 flux_frac_provided = 100.0 * flux_overlap / flux_mask_total if flux_mask_total != 0 else 0.0
 
-sys.stderr.write("\n=== GLOBAL MASK COMPARISON ===\n\n")
-sys.stderr.write("SoFiA mask pixels: {:d}\n".format(npix_sofia_total))
-sys.stderr.write("ALMA mask pixels: {:d}\n".format(npix_mask_total))
-sys.stderr.write("Overlap pixels: {:d}\n".format(npix_overlap))
-sys.stderr.write("(SoFiA ∩ ALMA mask) / SoFiA = {:.2f}% of SoFiA pixels\n".format(pixel_frac_sofia))
-sys.stderr.write("(SoFiA ∩ ALMA mask) / ALMA mask = {:.2f}% of ALMA mask pixels\n".format(pixel_frac_provided))
-sys.stderr.write("SoFiA total flux: {:.2f}\n".format(flux_sofia_total))
-sys.stderr.write("ALMA mask total flux: {:.2f}\n".format(flux_mask_total))
-sys.stderr.write("(SoFiA ∩ ALMA mask) / SoFiA = {:.2f}% of SoFiA flux\n".format(flux_frac_sofia))
-sys.stderr.write("(SoFiA ∩ ALMA mask) / ALMA mask = {:.2f}% of ALMA mask flux\n".format(flux_frac_provided))
+sys.stdout.write("\n=== GLOBAL MASK COMPARISON ===\n\n")
+sys.stdout.write("SoFiA mask pixels: {:d}\n".format(npix_sofia_total))
+sys.stdout.write("ALMA mask pixels: {:d}\n".format(npix_mask_total))
+sys.stdout.write("Overlap pixels: {:d}\n".format(npix_overlap))
+sys.stdout.write("(SoFiA ∩ ALMA mask) / SoFiA mask = {:.2f}% of SoFiA pixels\n".format(pixel_frac_sofia))
+sys.stdout.write("(SoFiA ∩ ALMA mask) / ALMA mask = {:.2f}% of ALMA mask pixels\n".format(pixel_frac_provided))
+sys.stdout.write("SoFiA mask total flux: {:.2f}\n".format(flux_sofia_total))
+sys.stdout.write("ALMA mask total flux: {:.2f}\n".format(flux_mask_total))
+sys.stdout.write("(SoFiA ∩ ALMA mask) / SoFiA mask= {:.2f}% of SoFiA flux\n".format(flux_frac_sofia))
+sys.stdout.write("(SoFiA ∩ ALMA mask) / ALMA mask = {:.2f}% of ALMA mask flux\n".format(flux_frac_provided))
    
-sys.stderr.write("\n=== SOURCE BY SOURCE MASK COMPARISON ===\n")
+sys.stdout.write("\n=== SOURCE BY SOURCE MASK COMPARISON ===\n")
 
 # Determine number of SoFiA sources
 n_src = int(np.nanmax(mask_sofia));
